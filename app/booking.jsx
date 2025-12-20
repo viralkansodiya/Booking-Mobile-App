@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import DateSelector from './DateSelector';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BookingTypeSelector from "./BookingTypeSelector";
+import TopBar from "./compenents/TopBar";
 
 
 export default function Booking() {
@@ -81,7 +82,8 @@ export default function Booking() {
 
   return (
     <View style={styles.container}>
-       
+      {/* 🔝 Home + Logout */}
+      <TopBar title="Booking" />
       {/* Title */}
       <Text style={styles.title}>Book Your Place</Text>
       <DateSelector

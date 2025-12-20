@@ -12,7 +12,6 @@ export default function Login() {
   // -----------------------------------
   useEffect(() => {
     loadSavedCredentials();
-    checkSession();
   }, []);
 
   // -----------------------------------
@@ -35,41 +34,6 @@ export default function Login() {
   // CHECK ACTIVE SESSION
   // -----------------------------------
   
-
-  const checkSession = async () => {
-    try {
-      const loggedOut = await AsyncStorage.getItem("LOGGED_OUT");
-
-      // 🚫 User explicitly logged out → skip auto login
-      if (loggedOut === "1") {
-        return;
-      }
-
-      const baseURL = await AsyncStorage.getItem("BASE_URL");
-      if (!baseURL) return;
-
-      const response = await fetch(
-        `${baseURL}/api/method/frappe.auth.get_logged_user`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-
-      const data = await response.json();
-
-      console.log("Session check:", data);
-
-      if (data.message && data.message !== "Guest") {
-        router.replace("/booking");
-      }
-
-    } catch (error) {
-      console.log("Session error:", error);
-    }
-  };
-
-
   const logout = async () => {
     const baseURL = await AsyncStorage.getItem("BASE_URL");
 
@@ -121,7 +85,7 @@ export default function Login() {
       if (data.message === "Logged In") {
         await AsyncStorage.removeItem("LOGGED_OUT");
         await AsyncStorage.setItem("USER_EMAIL", email);
-        router.replace("/booking");
+        router.replace("/BookingPlan");
       } else {
         Alert.alert("Login Failed", data.message || "Invalid login details");
       }
