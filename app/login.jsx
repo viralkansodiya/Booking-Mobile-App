@@ -85,7 +85,7 @@ export default function Login() {
       if (data.message === "Logged In") {
         await AsyncStorage.removeItem("LOGGED_OUT");
         await AsyncStorage.setItem("USER_EMAIL", email);
-        router.replace("/BookingPlan");
+        router.replace("/");
       } else {
         Alert.alert("Login Failed", data.message || "Invalid login details");
       }

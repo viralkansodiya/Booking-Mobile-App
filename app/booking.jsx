@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import DateSelector from './DateSelector';
+import DateSelector from './date-selector';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import BookingTypeSelector from "./BookingTypeSelector";
-import TopBar from "./compenents/TopBar";
+import BookingTypeSelector from "./booking-type-selector";
+import Sidebar from "./compenents/Sidebar";
+import MenuHeader from "./compenents/MenuHeader";
 
 
 export default function Booking() {
@@ -15,6 +16,8 @@ export default function Booking() {
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [rooms, setRooms] = useState([]);
   const [baseURL, setBaseURL] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+
 
 
   const fetchRooms = async () => {
@@ -81,9 +84,12 @@ export default function Booking() {
   }, [selectedOption]);
 
   return (
+      <View style={{ flex: 1 }}>
+      <MenuHeader title="Booking Plans" onMenuPress={() => setShowMenu(true)} />
+
+      <Sidebar visible={showMenu} onClose={() => setShowMenu(false)} />
     <View style={styles.container}>
-      {/* 🔝 Home + Logout */}
-      <TopBar title="Booking" />
+
       {/* Title */}
       <Text style={styles.title}>Book Your Place</Text>
       <DateSelector
@@ -123,6 +129,7 @@ export default function Booking() {
       )}
 
     </View>
+     </View>
   );
 }
 

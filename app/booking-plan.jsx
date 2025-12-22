@@ -9,12 +9,15 @@ import {
   ActivityIndicator
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import TopBar from "./compenents/TopBar"
+import Sidebar from "./compenents/Sidebar";
+import MenuHeader from "./compenents/MenuHeader";
 
 export default function BookingPlan() {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [baseURL, setBaseURL] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+
 
   useEffect(() => {
     init();
@@ -99,10 +102,11 @@ export default function BookingPlan() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#F6F8FA" }}>
-        
-        {/* 🔝 Toolbar (NO page padding) */}
-        <TopBar title="Booking" />
+    <View style={{ flex: 1}}>
+      <MenuHeader title="Booking Plans" onMenuPress={() => setShowMenu(true)} />
+
+      <Sidebar visible={showMenu} onClose={() => setShowMenu(false)} />
+      <View style={{ flex: 1, backgroundColor: "#F6F8FA" }}>
 
         {/* 📄 Page Content (WITH padding) */}
         <View style={styles.container}>
@@ -118,6 +122,7 @@ export default function BookingPlan() {
         />
         </View>
 
+    </View>
     </View>
     );
 }
