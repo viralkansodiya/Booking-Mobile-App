@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState, useCallback } from "react";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
 import MenuHeader from "./compenents/MenuHeader";
 import Sidebar from "./compenents/Sidebar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Pressable } from "react-native";
+
 
 const PLAN_TYPE_MAP = {
   dedicated_office: "Private Office Room",
@@ -12,30 +14,30 @@ const PLAN_TYPE_MAP = {
   meeting_room: "Meeting Room",
 };
 
-
 export default function Spaces() {
   const { type } = useLocalSearchParams();
   const [showMenu, setShowMenu] = useState(false);
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (type) {
-      fetchPlans();
-    }
-  }, [type]);
+  const fetchPlans = useCallback(async () => {
+    if (!type || !PLAN_TYPE_MAP[type]) return;
 
-  const fetchPlans = async () => {
     try {
       setLoading(true);
 
-      const category = PLAN_TYPE_MAP[type];
       const BASE_URL = await AsyncStorage.getItem("BASE_URL");
- 
-      if (!BASE_URL || !category) return;
+      if (!BASE_URL) {
+        console.warn("BASE_URL not found in storage");
+        return;
+      }
+
+      const category = PLAN_TYPE_MAP[type];
 
       const response = await fetch(
-        `${BASE_URL}/api/method/booking_app.booking_app.doctype.booking_plan.booking_plan.get_booking_plan?category=${category}`,
+        `${BASE_URL}/api/method/booking_app.booking_app.doctype.booking_plan.booking_plan.get_booking_plan?category=${encodeURIComponent(
+          category
+        )}`,
         {
           method: "GET",
           headers: {
@@ -47,69 +49,75 @@ export default function Spaces() {
 
       const result = await response.json();
 
-      const filteredPlans = (result.message || []).filter(
-        (plan) => plan.plan_type === PLAN_TYPE_MAP[type]
-      );
+      const plansFromApi = Array.isArray(result?.message)
+        ? result.message
+        : [];
 
-      setPlans(filteredPlans);
-
+      setPlans(plansFromApi);
     } catch (error) {
       console.error("API Error:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [type]);
 
-  const getTitle = () => {
-    switch (type) {
-      case "dedicated_desk":
-        return "Dedicated Desk";
-      case "open_desk":
-        return "Open Desk";
-      case "dedicated_office":
-        return "Dedicated Office";
-      case "meeting_room":
-        return "Meeting Room";
-      default:
-        return "Available Spaces";
-    }
-  };
+  useEffect(() => {
+    fetchPlans();
+  }, [fetchPlans]);
+
+  const getTitle = () => PLAN_TYPE_MAP[type] || "Available Spaces";
 
   return (
     <View style={{ flex: 1 }}>
       <MenuHeader title="Booking Plans" onMenuPress={() => setShowMenu(true)} />
       <Sidebar visible={showMenu} onClose={() => setShowMenu(false)} />
 
-      <ScrollView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 24 }}
+      >
         <Text style={styles.title}>{getTitle()}</Text>
 
-        {loading && <Text>Loading plans...</Text>}
-
-        {!loading && plans.length === 0 && (
-          <Text>No plans available</Text>
+        {loading && (
+          <ActivityIndicator size="large" style={{ marginTop: 20 }} />
         )}
 
-        {plans.map((plan) => (
-          <View key={plan.name} style={styles.card}>
-            <Text style={styles.planName}>{plan.plan_name}</Text>
+        {!loading && plans.length === 0 && (
+          <Text style={styles.emptyText}>No plans available</Text>
+        )}
 
-            <Text style={styles.planInfo}>
-              Duration: {plan.duration_unit}
+        {!loading &&
+          plans.map((plan) => (
+          <Pressable
+            key={plan.name}
+            style={styles.card}
+            onPress={() =>
+              router.push({
+                pathname: "/plan-view",
+                params: {
+                  plan: plan.plan_name,
+                },
+              })
+            }
+          >
+          <Text style={styles.planName}>{plan.plan_name}</Text>
+
+          <Text style={styles.planInfo}>
+            Duration: {plan.duration_unit}
+          </Text>
+
+          {plan.per_month_rate > 0 && (
+            <Text style={styles.price}>
+              ₹ {plan.per_month_rate} / month
             </Text>
+          )}
 
-            {plan.per_day_rate > 0 && (
-              <Text style={styles.price}>₹ {plan.per_day_rate} / day</Text>
-            )}
+          <Text style={styles.seat}>
+            Seats: {plan.no_of_seat}
+          </Text>
+        </Pressable>
+      ))}
 
-            {plan.per_month_rate > 0 && (
-              <Text style={styles.price}>₹ {plan.per_month_rate} / month</Text>
-            )}
-
-            <Text style={styles.seat}>
-              Seats: {plan.no_of_seat}
-            </Text>
-          </View>
-        ))}
       </ScrollView>
     </View>
   );
@@ -147,5 +155,10 @@ const styles = StyleSheet.create({
   seat: {
     marginTop: 4,
     color: "#666",
+  },
+  emptyText: {
+    marginTop: 20,
+    textAlign: "center",
+    color: "#888",
   },
 });
